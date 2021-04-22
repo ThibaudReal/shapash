@@ -50,19 +50,7 @@ def active_shapley_values(model, x_df, explainer=None, preprocessing=None):
                 """
             )
 
-    #  Get all dummies variables that should be grouped together
-    if preprocessing:
-        list_encoding = preprocessing_tolist(preprocessing)
-        use_ct, use_ce = check_transformers(list_encoding)
-        if use_ct:  # Case column transformers sklearn
-            list_all_one_hot_features = get_list_group_one_hot_features_ct(list_encoding=list_encoding)
-        elif use_ce:  # Case category_encoders
-            list_all_one_hot_features = get_list_group_one_hot_features_ce(list_encoding=list_encoding)
-        else:
-            raise NotImplementedError
-        c = [[x_df.columns.get_loc(feat) for feat in group_feat] for group_feat in list_all_one_hot_features]
-    else:
-        c = [[]]
+    c = get_dummies_groups(x_df=x_df, preprocessing=preprocessing)
 
     sdp_importance, sdp_index, size, sdp = explainer.importance_sdp_clf(
         X=x_df,
@@ -80,11 +68,32 @@ def active_shapley_values(model, x_df, explainer=None, preprocessing=None):
         S_star=s_star,
         num_threads=1
     )
-
-    contributions = [pd.DataFrame(contributions[:, :, i], columns=x_df.columns, index=x_df.index)
-                     for i in range(contributions.shape[-1])]
+    if contributions.shape[-1] > 1:
+        contributions = [pd.DataFrame(contributions[:, :, i], columns=x_df.columns, index=x_df.index)
+                         for i in range(contributions.shape[-1])]
+    else:
+        contributions = pd.DataFrame(contributions[:, :, 0], columns=x_df.columns, index=x_df.index)
 
     return contributions, sdp_importance, explainer
+
+
+def get_dummies_groups(x_df, preprocessing):
+    """
+    Get all dummies variables that should be grouped together
+    """
+    if preprocessing:
+        list_encoding = preprocessing_tolist(preprocessing)
+        use_ct, use_ce = check_transformers(list_encoding)
+        if use_ct:  # Case column transformers sklearn
+            list_all_one_hot_features = get_list_group_one_hot_features_ct(list_encoding=list_encoding)
+        elif use_ce:  # Case category_encoders
+            list_all_one_hot_features = get_list_group_one_hot_features_ce(list_encoding=list_encoding)
+        else:
+            raise NotImplementedError
+        c = [[x_df.columns.get_loc(feat) for feat in group_feat] for group_feat in list_all_one_hot_features]
+    else:
+        c = [[]]
+    return c
 
 
 def get_list_group_one_hot_features_ct(list_encoding):
