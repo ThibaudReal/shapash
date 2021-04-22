@@ -14,6 +14,7 @@ from shapash.utils.transform import adapt_contributions
 from shapash.utils.utils import get_host_name
 from shapash.utils.threading import CustomThread
 from shapash.utils.shap_backend import shap_contributions, check_explainer, get_shap_interaction_values
+from shapash.utils.acv_backend import active_shapley_values
 from shapash.utils.check import check_model, check_label_dict, check_ypred, check_contribution_object,\
     check_postprocessing, check_features_name
 from shapash.manipulation.select_lines import keep_right_contributions
@@ -126,7 +127,8 @@ class SmartExplainer:
             self.title_story = ''
 
     def compile(self, x, model, explainer=None, contributions=None, y_pred=None,
-                preprocessing=None, postprocessing=None, title_story: str = None):
+                preprocessing=None, postprocessing=None, title_story: str = None,
+                backend='shap'):
         """
         The compile method is the first step to understand model and prediction. It performs the sorting
         of contributions, the reverse preprocessing steps and performs all the calculations necessary for
@@ -184,12 +186,16 @@ class SmartExplainer:
         title_story: str (default: None)
             The default title is empty. You can specify a custom title
             which can be used the webapp, or other methods
+        backend : str
+            Select which computation method to use in order to compute contributions
+            and feature importance. Possible values are 'shap' or 'acv'.
 
         Example
         --------
         >>> xpl.compile(x=xtest_df,model=my_model)
 
         """
+        self.features_imp = None
         self.x_init = x
         self.x_pred = inverse_transform(self.x_init, preprocessing)
         self.preprocessing = preprocessing
@@ -201,7 +207,16 @@ class SmartExplainer:
         if explainer is not None and contributions is not None:
             raise ValueError("You have to specify just one of these arguments: explainer, contributions")
         if contributions is None:
-            contributions, explainer = shap_contributions(model, self.x_init, self.check_explainer(explainer))
+            if backend.lower() == 'shap':
+                contributions, explainer = shap_contributions(model, self.x_init, self.check_explainer(explainer))
+            elif backend.lower() == 'acv':
+                if self._case == 'classification':
+                    contributions, self.features_imp, explainer = active_shapley_values(
+                        model=model, x_df=self.x_init, explainer=explainer, preprocessing=preprocessing)
+                else:
+                    raise NotImplementedError('ACV does not support regression case yet.')
+            else:
+                raise NotImplementedError(f'Unknown backend : {backend}. Possible values are "shap" or "acv".')
         adapt_contrib = self.adapt_contributions(contributions)
         self.state = self.choose_state(adapt_contrib)
         self.contributions = self.apply_preprocessing(self.validate_contributions(adapt_contrib), preprocessing)
@@ -225,7 +240,6 @@ class SmartExplainer:
                 self.x_pred
             )
         )
-        self.features_imp = None
         self.features_desc = self.check_features_desc()
         if title_story is not None:
             self.title_story = title_story
