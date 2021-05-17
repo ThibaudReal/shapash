@@ -22,18 +22,25 @@ requirements = [
         'dash-table==4.11.0',
         'nbformat>4.2.0',
         'numba==0.51.2',
-        'nbconvert==6.0.7',
-        'papermill==2.3.2',
-        'matplotlib>=3.0',
-        'seaborn==0.11.1'
+        'scikit-learn'
     ]
+
+# This list should be identical to the list in shapash/report/__init__.py
+report_requirements = [
+    'nbconvert==6.0.7',
+    'papermill',
+    'matplotlib',
+    'seaborn',
+    'notebook',
+    'Jinja2'
+]
 
 setup_requirements = ['pytest-runner', ]
 
 test_requirements = ['pytest', ]
 
 setup(
-    name="shapash", # Replace with your own username
+    name="shapash",
     version="1.3.2",
     python_requires='>3.5, < 3.9',
     url='https://github.com/MAIF/shapash',
@@ -51,6 +58,9 @@ setup(
         "Operating System :: OS Independent",
     ],
     install_requires=requirements,
+    extras_require={
+        'report': report_requirements
+    },
     license="Apache Software License 2.0",
     keywords='shapash',
     package_dir={
