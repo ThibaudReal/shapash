@@ -25,8 +25,10 @@ requirements = [
         'scikit-learn'
     ]
 
+extras = dict()
+
 # This list should be identical to the list in shapash/report/__init__.py
-report_requirements = [
+extras['report'] = [
     'nbconvert==6.0.7',
     'papermill',
     'matplotlib',
@@ -34,6 +36,12 @@ report_requirements = [
     'notebook',
     'Jinja2'
 ]
+
+extras['xgboost'] = ['xgboost>=1.0.0']
+extras['lightgbm'] = ['lightgbm>=2.3.0']
+extras['catboost'] = ['catboost>=0.21']
+extras['scikit-learn'] = ['scikit-learn>=0.23.0']
+
 
 setup_requirements = ['pytest-runner', ]
 
@@ -58,9 +66,7 @@ setup(
         "Operating System :: OS Independent",
     ],
     install_requires=requirements,
-    extras_require={
-        'report': report_requirements
-    },
+    extras_require=extras,
     license="Apache Software License 2.0",
     keywords='shapash',
     package_dir={
