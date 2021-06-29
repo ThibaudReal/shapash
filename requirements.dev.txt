@@ -1,5 +1,5 @@
 pip
-cython
+lxml
 dash[testing]==1.17.0
 catboost>=0.22
 category-encoders==2.1.0
