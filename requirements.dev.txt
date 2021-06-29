@@ -1,6 +1,6 @@
 pip
 lxml
-dash[testing]==1.17.0
+dash[testing]
 catboost>=0.22
 category-encoders==2.1.0
 dash-bootstrap-components==0.9.1
